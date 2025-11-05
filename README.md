@@ -1,46 +1,84 @@
-# Getting Started with Create React App
+# ArcGIS REST Service Explorer
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A React-based web application for exploring and querying ArcGIS REST service endpoints.
 
-## Available Scripts
+## Features
 
-In the project directory, you can run:
+- **Service Discovery**: Automatically discover all services, folders, and tables from an ArcGIS REST endpoint
+- **Service Table**: Display services in a sortable, searchable table with:
+  - Folder paths
+  - Service names and types
+  - Layer and table counts
+  - Authentication status indicators
+- **Layer Querying**: Query any layer or table with:
+  - Custom WHERE clauses (default: `1=1` for all records)
+  - Optional geometry inclusion
+  - Configurable result limits
+  - Export results as CSV or JSON
+- **Authentication Detection**: Automatically detects services that require authentication or redirect to login pages
+- **Empty Folder Detection**: Identifies folders with no services
 
-### `npm start`
+## Getting Started
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+### Prerequisites
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+- Node.js (v14 or higher)
+- npm or yarn
 
-### `npm test`
+### Installation
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Dependencies are already installed. If you need to reinstall:
+```bash
+npm install
+```
 
-### `npm run build`
+### Running the Application
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+Start the development server:
+```bash
+npm start
+```
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+The application will open in your browser at `http://localhost:3000`
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### Building for Production
 
-### `npm run eject`
+Create a production build:
+```bash
+npm run build
+```
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+## Usage
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+1. Enter an ArcGIS REST service URL in the input field (e.g., `https://mapservices.randwick.nsw.gov.au/arcgis/rest/services`)
+2. Click "Explore" to fetch all services
+3. Use the search and filter controls to find specific services
+4. Click "Query" on any service with layers to open the query interface
+5. Select a layer, configure query parameters, and execute the query
+6. Export results as CSV or JSON
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+## Technology Stack
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+- React with TypeScript
+- Bootstrap & React-Bootstrap for UI
+- Axios for HTTP requests
+- ArcGIS REST API
 
-## Learn More
+## Project Structure
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+```
+src/
+├── components/
+│   ├── ServiceExplorer.tsx    # Main component
+│   ├── ServiceTable.tsx        # Service listing with search/filter
+│   └── LayerQuery.tsx          # Layer query interface
+├── services/
+│   └── arcgisService.ts        # ArcGIS REST API client
+├── types/
+│   └── arcgis.types.ts         # TypeScript interfaces
+└── App.tsx                     # Root component
+```
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## License
+
+MIT
