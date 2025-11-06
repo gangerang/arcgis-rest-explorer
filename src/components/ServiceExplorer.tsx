@@ -128,9 +128,9 @@ const ServiceExplorer: React.FC = () => {
 
   return (
     <Container fluid className="py-4">
-      <div className="d-flex justify-content-between align-items-center mb-4">
+      <div className="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-4 gap-2">
         <h1 className="mb-0">ArcGIS REST Service Explorer</h1>
-        <Button variant="outline-secondary" size="sm" onClick={handleClearCache}>
+        <Button variant="outline-secondary" size="sm" onClick={handleClearCache} className="align-self-end align-self-sm-auto">
           Clear Cache
         </Button>
       </div>
@@ -138,7 +138,7 @@ const ServiceExplorer: React.FC = () => {
       {/* URL Input */}
       <Form.Group className="mb-4">
         <Form.Label>ArcGIS REST Service URL</Form.Label>
-        <div className="d-flex gap-2">
+        <div className="d-flex flex-column flex-md-row gap-2">
           <div className="flex-grow-1 position-relative">
             <Form.Control
               type="text"
@@ -150,75 +150,80 @@ const ServiceExplorer: React.FC = () => {
             />
           </div>
 
-          {history.length > 0 && (
-            <Dropdown show={showHistory} onToggle={(show) => setShowHistory(show)}>
-              <Dropdown.Toggle variant="outline-secondary" disabled={loading}>
-                History
-              </Dropdown.Toggle>
-              <Dropdown.Menu>
-                {history.map((entry, index) => (
-                  <Dropdown.Item
-                    key={index}
-                    onClick={() => handleSelectHistory(entry.url)}
-                  >
-                    {entry.url.length > 50 ? `...${entry.url.slice(-47)}` : entry.url}
+          <div className="d-flex flex-column flex-sm-row gap-2">
+            {history.length > 0 && (
+              <Dropdown show={showHistory} onToggle={(show) => setShowHistory(show)}>
+                <Dropdown.Toggle variant="outline-secondary" disabled={loading}>
+                  History
+                </Dropdown.Toggle>
+                <Dropdown.Menu>
+                  {history.map((entry, index) => (
+                    <Dropdown.Item
+                      key={index}
+                      onClick={() => handleSelectHistory(entry.url)}
+                    >
+                      {entry.url.length > 50 ? `...${entry.url.slice(-47)}` : entry.url}
+                    </Dropdown.Item>
+                  ))}
+                  <Dropdown.Divider />
+                  <Dropdown.Item onClick={handleClearHistory}>
+                    Clear History
                   </Dropdown.Item>
-                ))}
-                <Dropdown.Divider />
-                <Dropdown.Item onClick={handleClearHistory}>
-                  Clear History
-                </Dropdown.Item>
-              </Dropdown.Menu>
-            </Dropdown>
-          )}
+                </Dropdown.Menu>
+              </Dropdown>
+            )}
 
-          <ButtonGroup>
-            {!loading && (
-              <>
+            <ButtonGroup className="d-flex">
+              {!loading && (
+                <>
+                  <Button
+                    onClick={() => handleExplore('services', true)}
+                    variant="primary"
+                    className="flex-grow-1"
+                  >
+                    <span className="d-none d-lg-inline">Explore Services</span>
+                    <span className="d-inline d-lg-none">Services</span>
+                  </Button>
+                  <Button
+                    onClick={() => handleExplore('resources', true)}
+                    variant="info"
+                    className="flex-grow-1"
+                  >
+                    <span className="d-none d-lg-inline">Explore Resources</span>
+                    <span className="d-inline d-lg-none">Resources</span>
+                  </Button>
+                </>
+              )}
+              {loading && (
+                <>
+                  <Button disabled variant="primary" className="flex-grow-1">
+                    <Spinner
+                      as="span"
+                      animation="border"
+                      size="sm"
+                      role="status"
+                      aria-hidden="true"
+                      className="me-2"
+                    />
+                    <span className="d-none d-sm-inline">Exploring...</span>
+                    <span className="d-inline d-sm-none">...</span>
+                  </Button>
+                  <Button onClick={handleCancel} variant="danger" size="sm">
+                    Cancel
+                  </Button>
+                </>
+              )}
+              {!loading && (services.length > 0 || resources.length > 0) && (
                 <Button
-                  onClick={() => handleExplore('services', true)}
-                  variant="primary"
-                  style={{ minWidth: '140px' }}
+                  onClick={() => handleExplore(viewMode, false)}
+                  variant="outline-primary"
+                  title="Refresh without cache"
                 >
-                  Explore Services
+                  ↻
                 </Button>
-                <Button
-                  onClick={() => handleExplore('resources', true)}
-                  variant="info"
-                  style={{ minWidth: '140px' }}
-                >
-                  Explore Resources
-                </Button>
-              </>
-            )}
-            {loading && (
-              <>
-                <Button disabled variant="primary" style={{ minWidth: '140px' }}>
-                  <Spinner
-                    as="span"
-                    animation="border"
-                    size="sm"
-                    role="status"
-                    aria-hidden="true"
-                    className="me-2"
-                  />
-                  Exploring...
-                </Button>
-                <Button onClick={handleCancel} variant="danger" size="sm">
-                  Cancel
-                </Button>
-              </>
-            )}
-            {!loading && (services.length > 0 || resources.length > 0) && (
-              <Button
-                onClick={() => handleExplore(viewMode, false)}
-                variant="outline-primary"
-                title="Refresh without cache"
-              >
-                ↻
-              </Button>
-            )}
-          </ButtonGroup>
+              )}
+            </ButtonGroup>
+          </div>
         </div>
         <Form.Text className="text-muted">
           Enter the base URL of an ArcGIS REST services endpoint
@@ -273,6 +278,7 @@ const ServiceExplorer: React.FC = () => {
         onHide={() => setShowQueryModal(false)}
         size="xl"
         centered
+        fullscreen="sm-down"
       >
         <Modal.Header closeButton>
           <Modal.Title>

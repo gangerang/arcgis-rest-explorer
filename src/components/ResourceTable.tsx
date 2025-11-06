@@ -101,15 +101,24 @@ const ResourceTable: React.FC<ResourceTableProps> = ({ resources, onResourceSele
     onResourceSelect(resource);
   };
 
-  const renderSortableHeader = (column: string, label: string) => (
-    <th
-      onClick={() => handleSort(column)}
-      style={{ cursor: 'pointer', userSelect: 'none' }}
-      title={`Sort by ${label}`}
-    >
-      {label}
-    </th>
-  );
+  const renderSortableHeader = (column: string, label: string) => {
+    let className = '';
+    if (column === 'folder') className = 'hide-mobile-folder';
+    if (column === 'service') className = 'hide-mobile-service';
+    if (column === 'geometry') className = 'hide-mobile-geometry';
+    if (column === 'fields') className = 'hide-mobile-fields';
+
+    return (
+      <th
+        onClick={() => handleSort(column)}
+        style={{ cursor: 'pointer', userSelect: 'none' }}
+        title={`Sort by ${label}`}
+        className={className}
+      >
+        {label}
+      </th>
+    );
+  };
 
   const getTypeBadge = (type: string) => {
     const colorMap: { [key: string]: string } = {
@@ -136,13 +145,13 @@ const ResourceTable: React.FC<ResourceTableProps> = ({ resources, onResourceSele
   };
 
   return (
-    <div>
+    <div className="resource-table-mobile">
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h3>Resources ({filteredResources.length})</h3>
       </div>
 
       {/* Search and Filter */}
-      <div className="mb-3 d-flex gap-2">
+      <div className="mb-3 d-flex gap-2 mobile-stack-filters">
         <InputGroup style={{ flex: 2 }}>
           <InputGroup.Text>Search</InputGroup.Text>
           <Form.Control
@@ -183,8 +192,8 @@ const ResourceTable: React.FC<ResourceTableProps> = ({ resources, onResourceSele
       </div>
 
       {/* Resources Table */}
-      <div>
-        <Table striped bordered hover responsive size="sm">
+      <div className="table-responsive">
+        <Table striped bordered hover size="sm">
           <thead style={{ position: 'sticky', top: 0, backgroundColor: '#fff', zIndex: 1 }}>
             <tr>
               {renderSortableHeader('folder', 'Folder')}
@@ -193,7 +202,7 @@ const ResourceTable: React.FC<ResourceTableProps> = ({ resources, onResourceSele
               {renderSortableHeader('type', 'Type')}
               {renderSortableHeader('geometry', 'Geometry')}
               {renderSortableHeader('fields', 'Fields')}
-              <th>Last Updated</th>
+              <th className="hide-mobile-updated hide-tablet-updated">Last Updated</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -214,7 +223,7 @@ const ResourceTable: React.FC<ResourceTableProps> = ({ resources, onResourceSele
                       : ''
                   }
                 >
-                  <td>
+                  <td className="hide-mobile-folder">
                     {resource.folder ? (
                       <a
                         href={`${resource.serviceUrl.split('/').slice(0, -1).join('/')}`}
@@ -228,7 +237,7 @@ const ResourceTable: React.FC<ResourceTableProps> = ({ resources, onResourceSele
                       '-'
                     )}
                   </td>
-                  <td>
+                  <td className="hide-mobile-service">
                     <div className="d-flex flex-column">
                       <a
                         href={resource.serviceUrl}
@@ -260,17 +269,17 @@ const ResourceTable: React.FC<ResourceTableProps> = ({ resources, onResourceSele
                     </div>
                   </td>
                   <td>{getTypeBadge(resource.type)}</td>
-                  <td>
+                  <td className="hide-mobile-geometry">
                     {resource.geometryType ? (
                       <Badge bg="secondary">{resource.geometryType}</Badge>
                     ) : (
                       '-'
                     )}
                   </td>
-                  <td className="text-center">
+                  <td className="text-center hide-mobile-fields">
                     {resource.fieldCount !== undefined ? resource.fieldCount : '-'}
                   </td>
-                  <td>
+                  <td className="hide-mobile-updated hide-tablet-updated">
                     <small>{formatLastUpdated(resource.lastEditDate)}</small>
                   </td>
                   <td>

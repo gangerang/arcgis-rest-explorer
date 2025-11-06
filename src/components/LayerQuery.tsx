@@ -176,7 +176,7 @@ const LayerQuery: React.FC<LayerQueryProps> = ({ service }) => {
             </Form.Text>
           </Form.Group>
 
-          <div className="mb-3 d-flex gap-3 align-items-center">
+          <div className="mb-3 d-flex gap-3 align-items-center query-controls-mobile">
             <Form.Check
               type="checkbox"
               label="Include Geometry"
@@ -184,8 +184,8 @@ const LayerQuery: React.FC<LayerQueryProps> = ({ service }) => {
               onChange={(e) => setIncludeGeometry(e.target.checked)}
             />
 
-            <Form.Group className="mb-0" style={{ width: '200px' }}>
-              <Form.Label className="mb-0 me-2">Result Limit:</Form.Label>
+            <Form.Group className="mb-0 w-100">
+              <Form.Label className="mb-1">Result Limit:</Form.Label>
               <Form.Control
                 type="number"
                 value={resultLimit}
@@ -229,8 +229,8 @@ const LayerQuery: React.FC<LayerQueryProps> = ({ service }) => {
         {/* Query Results */}
         {queryResult && queryResult.features && (
           <div className="mt-4">
-            <div className="d-flex justify-content-between align-items-center mb-3">
-              <h5>
+            <div className="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-3 gap-2">
+              <h5 className="mb-0">
                 Results: {queryResult.features.length} feature(s)
                 {queryResult.exceededTransferLimit && (
                   <Badge bg="warning" text="dark" className="ms-2">
@@ -238,22 +238,22 @@ const LayerQuery: React.FC<LayerQueryProps> = ({ service }) => {
                   </Badge>
                 )}
               </h5>
-              <div className="d-flex gap-2">
+              <div className="d-flex gap-2 export-buttons-mobile">
                 <Button size="sm" variant="outline-success" onClick={handleExportCSV}>
-                  Export CSV
+                  CSV
                 </Button>
                 <Button size="sm" variant="outline-info" onClick={handleExportJSON}>
-                  Export JSON
+                  JSON
                 </Button>
                 {includeGeometry && (
                   <Button size="sm" variant="outline-primary" onClick={handleExportGeoJSON}>
-                    Export GeoJSON
+                    GeoJSON
                   </Button>
                 )}
               </div>
             </div>
 
-            <div style={{ maxHeight: '400px', overflowY: 'auto', overflowX: 'auto' }}>
+            <div className="query-result-table-wrapper" style={{ maxHeight: '400px', overflowY: 'auto', overflowX: 'auto' }}>
               <Table striped bordered hover size="sm">
                 <thead style={{ position: 'sticky', top: 0, backgroundColor: '#fff', zIndex: 1 }}>
                   <tr>

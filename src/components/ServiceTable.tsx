@@ -152,20 +152,27 @@ const ServiceTable: React.FC<ServiceTableProps> = ({ services, onServiceSelect }
     return <Badge bg={colorMap[type] || 'secondary'}>{type}</Badge>;
   };
 
-  const renderSortableHeader = (column: string, label: string) => (
-    <th
-      onClick={() => handleSort(column)}
-      style={{ cursor: 'pointer', userSelect: 'none' }}
-      title={`Sort by ${label}`}
-    >
-      {label}
-    </th>
-  );
+  const renderSortableHeader = (column: string, label: string) => {
+    let className = '';
+    if (column === 'folder') className = 'hide-mobile-folder';
+    if (column === 'resources') className = 'hide-mobile-resources';
+
+    return (
+      <th
+        onClick={() => handleSort(column)}
+        style={{ cursor: 'pointer', userSelect: 'none' }}
+        title={`Sort by ${label}`}
+        className={className}
+      >
+        {label}
+      </th>
+    );
+  };
 
   return (
-    <div>
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <h3>Services ({filteredServices.length})</h3>
+    <div className="service-table-mobile">
+      <div className="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-3 gap-2">
+        <h3 className="mb-0">Services ({filteredServices.length})</h3>
         <FormCheck
           type="checkbox"
           label={`Show Favorites Only (${favorites.length})`}
@@ -175,7 +182,7 @@ const ServiceTable: React.FC<ServiceTableProps> = ({ services, onServiceSelect }
       </div>
 
       {/* Search and Filter */}
-      <div className="mb-3 d-flex gap-2">
+      <div className="mb-3 d-flex gap-2 mobile-stack-filters">
         <InputGroup style={{ flex: 2 }}>
           <InputGroup.Text>Search</InputGroup.Text>
           <Form.Control
@@ -217,8 +224,8 @@ const ServiceTable: React.FC<ServiceTableProps> = ({ services, onServiceSelect }
       </div>
 
       {/* Services Table */}
-      <div>
-        <Table striped bordered hover responsive>
+      <div className="table-responsive">
+        <Table striped bordered hover>
           <thead style={{ position: 'sticky', top: 0, backgroundColor: '#fff', zIndex: 1 }}>
             <tr>
               <th style={{ width: '40px' }}>★</th>
@@ -247,7 +254,7 @@ const ServiceTable: React.FC<ServiceTableProps> = ({ services, onServiceSelect }
                     <Button
                       variant="link"
                       size="sm"
-                      className="p-0 text-decoration-none"
+                      className="p-0 text-decoration-none favorite-star-btn"
                       style={{
                         fontSize: '1.5rem',
                         color: StorageService.isFavorite(service) ? '#ffc107' : '#dee2e6',
@@ -262,7 +269,7 @@ const ServiceTable: React.FC<ServiceTableProps> = ({ services, onServiceSelect }
                       ★
                     </Button>
                   </td>
-                  <td>
+                  <td className="hide-mobile-folder">
                     {service.folder ? (
                       <a
                         href={`${service.url.split('/').slice(0, -1).join('/')}`}
@@ -292,7 +299,7 @@ const ServiceTable: React.FC<ServiceTableProps> = ({ services, onServiceSelect }
                     </div>
                   </td>
                   <td>{getTypeBadge(service.type)}</td>
-                  <td className="text-center">
+                  <td className="text-center hide-mobile-resources">
                     {((service.layerCount || 0) + (service.tableCount || 0)) || '-'}
                   </td>
                   <td>{getStatusBadge(service)}</td>
