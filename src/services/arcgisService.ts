@@ -436,6 +436,39 @@ export class ArcGISServiceClient {
   }
 
   /**
+   * Gets the last edit date for a resource by querying the max value of the edit date field
+   */
+  private static async getLastEditDate(
+    serviceUrl: string,
+    resourceId: number,
+    editDateField: string
+  ): Promise<number | undefined> {
+    try {
+      const url = `${serviceUrl}/${resourceId}/query`;
+      const response = await axios.get(url, {
+        params: {
+          where: '1=1',
+          outFields: editDateField,
+          returnGeometry: false,
+          resultRecordCount: 1,
+          orderByFields: `${editDateField} DESC`,
+          f: 'json',
+        },
+        timeout: 5000,
+      });
+
+      if (response.data.features && response.data.features.length > 0) {
+        const value = response.data.features[0].attributes[editDateField];
+        return value ? Number(value) : undefined;
+      }
+    } catch (error) {
+      // Silently fail - not all resources will have data or support this query
+      return undefined;
+    }
+    return undefined;
+  }
+
+  /**
    * Fetches all resources (layers and tables) from all services with detailed information
    */
   static async getResourceCatalog(
@@ -485,6 +518,17 @@ export class ArcGISServiceClient {
             for (const layer of service.layers) {
               try {
                 const details = await this.getLayerDetails(service.url, layer.id, useCache);
+                const editFieldsInfo = (details as any).editFieldsInfo;
+
+                // Try to fetch the last edit date if editDateField exists
+                let lastEditDate: number | undefined;
+                if (editFieldsInfo?.editDateField) {
+                  lastEditDate = await this.getLastEditDate(
+                    service.url,
+                    layer.id,
+                    editFieldsInfo.editDateField
+                  );
+                }
 
                 serviceResources.push({
                   id: layer.id,
@@ -499,8 +543,9 @@ export class ArcGISServiceClient {
                   fieldCount: details.fields?.length,
                   fields: details.fields,
                   description: details.description,
-                  editFieldsInfo: (details as any).editFieldsInfo,
-                  hasTimestamp: !!(details as any).editFieldsInfo?.editDateField || !!(details as any).timeInfo,
+                  editFieldsInfo,
+                  hasTimestamp: !!editFieldsInfo?.editDateField || !!(details as any).timeInfo,
+                  lastEditDate,
                   requiresAuth: false,
                 });
               } catch (error) {
@@ -527,6 +572,17 @@ export class ArcGISServiceClient {
             for (const table of service.tables) {
               try {
                 const details = await this.getLayerDetails(service.url, table.id, useCache);
+                const editFieldsInfo = (details as any).editFieldsInfo;
+
+                // Try to fetch the last edit date if editDateField exists
+                let lastEditDate: number | undefined;
+                if (editFieldsInfo?.editDateField) {
+                  lastEditDate = await this.getLastEditDate(
+                    service.url,
+                    table.id,
+                    editFieldsInfo.editDateField
+                  );
+                }
 
                 serviceResources.push({
                   id: table.id,
@@ -540,8 +596,9 @@ export class ArcGISServiceClient {
                   fieldCount: details.fields?.length,
                   fields: details.fields,
                   description: details.description,
-                  editFieldsInfo: (details as any).editFieldsInfo,
-                  hasTimestamp: !!(details as any).editFieldsInfo?.editDateField || !!(details as any).timeInfo,
+                  editFieldsInfo,
+                  hasTimestamp: !!editFieldsInfo?.editDateField || !!(details as any).timeInfo,
+                  lastEditDate,
                   requiresAuth: false,
                 });
               } catch (error) {

@@ -101,18 +101,13 @@ const ResourceTable: React.FC<ResourceTableProps> = ({ resources, onResourceSele
     onResourceSelect(resource);
   };
 
-  const getSortIndicator = (column: string) => {
-    if (sortColumn !== column) return ' ↕';
-    return sortDirection === 'asc' ? ' ↑' : ' ↓';
-  };
-
   const renderSortableHeader = (column: string, label: string) => (
     <th
       onClick={() => handleSort(column)}
       style={{ cursor: 'pointer', userSelect: 'none' }}
       title={`Sort by ${label}`}
     >
-      {label}{getSortIndicator(column)}
+      {label}
     </th>
   );
 
@@ -125,24 +120,25 @@ const ResourceTable: React.FC<ResourceTableProps> = ({ resources, onResourceSele
     return <Badge bg={colorMap[type] || 'secondary'}>{type}</Badge>;
   };
 
-  const getTimestampBadge = (resource: ArcGISResource) => {
-    if (!resource.hasTimestamp) return null;
+  const formatLastUpdated = (lastEditDate?: number) => {
+    if (!lastEditDate) return '-';
 
-    const timestampFields = [];
-    if (resource.editFieldsInfo?.creationDateField) {
-      timestampFields.push(resource.editFieldsInfo.creationDateField);
+    try {
+      const date = new Date(lastEditDate);
+      // Check if date is valid
+      if (isNaN(date.getTime())) return '-';
+
+      // Format as YYYY-MM-DD HH:MM
+      return date.toLocaleString('en-US', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    } catch {
+      return '-';
     }
-    if (resource.editFieldsInfo?.editDateField) {
-      timestampFields.push(resource.editFieldsInfo.editDateField);
-    }
-
-    if (timestampFields.length === 0) return null;
-
-    return (
-      <Badge bg="success" title={`Timestamp fields: ${timestampFields.join(', ')}`}>
-        🕒
-      </Badge>
-    );
   };
 
   return (
@@ -203,7 +199,7 @@ const ResourceTable: React.FC<ResourceTableProps> = ({ resources, onResourceSele
               {renderSortableHeader('type', 'Type')}
               {renderSortableHeader('geometry', 'Geometry')}
               {renderSortableHeader('fields', 'Fields')}
-              <th>Timestamps</th>
+              <th>Last Updated</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -280,7 +276,9 @@ const ResourceTable: React.FC<ResourceTableProps> = ({ resources, onResourceSele
                   <td className="text-center">
                     {resource.fieldCount !== undefined ? resource.fieldCount : '-'}
                   </td>
-                  <td className="text-center">{getTimestampBadge(resource)}</td>
+                  <td>
+                    <small>{formatLastUpdated(resource.lastEditDate)}</small>
+                  </td>
                   <td>
                     <Button
                       size="sm"

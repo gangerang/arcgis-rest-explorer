@@ -128,6 +128,7 @@ export interface ArcGISResource {
     editorField?: string;
   };
   hasTimestamp?: boolean;
+  lastEditDate?: number; // Unix timestamp in milliseconds
   requiresAuth: boolean;
   error?: string;
 }

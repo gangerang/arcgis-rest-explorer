@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Form, Button, Table, Alert, Spinner, Badge } from 'react-bootstrap';
 import { ArcGISService, ArcGISQueryResponse } from '../types/arcgis.types';
 import { ArcGISServiceClient } from '../services/arcgisService';
@@ -8,13 +8,28 @@ interface LayerQueryProps {
 }
 
 const LayerQuery: React.FC<LayerQueryProps> = ({ service }) => {
-  const [selectedLayerId, setSelectedLayerId] = useState<number | null>(null);
+  // Get layers and tables for selection
+  const layerOptions = useMemo(() => [
+    ...(service.layers || []),
+    ...(service.tables || []).map((table) => ({ ...table, type: 'Table' })),
+  ], [service]);
+
+  const [selectedLayerId, setSelectedLayerId] = useState<number | null>(
+    layerOptions.length > 0 ? layerOptions[0].id : null
+  );
   const [whereClause, setWhereClause] = useState<string>('1=1');
   const [includeGeometry, setIncludeGeometry] = useState<boolean>(false);
   const [resultLimit, setResultLimit] = useState<number>(100);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
   const [queryResult, setQueryResult] = useState<ArcGISQueryResponse | null>(null);
+
+  // Auto-select first layer when service changes
+  useEffect(() => {
+    if (layerOptions.length > 0) {
+      setSelectedLayerId(layerOptions[0].id);
+    }
+  }, [layerOptions]);
 
   const handleQuery = async () => {
     if (selectedLayerId === null) {
@@ -128,12 +143,6 @@ const LayerQuery: React.FC<LayerQueryProps> = ({ service }) => {
     a.click();
     window.URL.revokeObjectURL(url);
   };
-
-  // Get layers and tables for selection
-  const layerOptions = [
-    ...(service.layers || []),
-    ...(service.tables || []).map((table) => ({ ...table, type: 'Table' })),
-  ];
 
   return (
     <>

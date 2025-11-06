@@ -152,18 +152,13 @@ const ServiceTable: React.FC<ServiceTableProps> = ({ services, onServiceSelect }
     return <Badge bg={colorMap[type] || 'secondary'}>{type}</Badge>;
   };
 
-  const getSortIndicator = (column: string) => {
-    if (sortColumn !== column) return ' ↕';
-    return sortDirection === 'asc' ? ' ↑' : ' ↓';
-  };
-
   const renderSortableHeader = (column: string, label: string) => (
     <th
       onClick={() => handleSort(column)}
       style={{ cursor: 'pointer', userSelect: 'none' }}
       title={`Sort by ${label}`}
     >
-      {label}{getSortIndicator(column)}
+      {label}
     </th>
   );
 
