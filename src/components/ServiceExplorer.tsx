@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Form, Button, Alert, Spinner, ProgressBar, Dropdown, ButtonGroup } from 'react-bootstrap';
+import { Container, Form, Button, Alert, Spinner, ProgressBar, Dropdown, ButtonGroup, Modal } from 'react-bootstrap';
 import { ArcGISService } from '../types/arcgis.types';
 import { ArcGISServiceClient } from '../services/arcgisService';
 import { StorageService } from '../services/storageService';
@@ -7,11 +7,12 @@ import ServiceTable from './ServiceTable';
 import LayerQuery from './LayerQuery';
 
 const ServiceExplorer: React.FC = () => {
-  const [url, setUrl] = useState<string>('https://mapservices.randwick.nsw.gov.au/arcgis/rest/services');
+  const [url, setUrl] = useState<string>('https://example.com/arcgis/rest/services');
   const [services, setServices] = useState<ArcGISService[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
   const [selectedService, setSelectedService] = useState<ArcGISService | null>(null);
+  const [showQueryModal, setShowQueryModal] = useState<boolean>(false);
   const [progress, setProgress] = useState<{ current: number; total: number; message: string }>({
     current: 0,
     total: 1,
@@ -110,7 +111,7 @@ const ServiceExplorer: React.FC = () => {
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="https://mapservices.randwick.nsw.gov.au/arcgis/rest/services"
+              placeholder="https://example.com/arcgis/rest/services"
               disabled={loading}
             />
           </div>
@@ -207,19 +208,29 @@ const ServiceExplorer: React.FC = () => {
 
       {/* Results */}
       {services.length > 0 && (
-        <>
-          <ServiceTable
-            services={services}
-            onServiceSelect={setSelectedService}
-          />
-
-          {selectedService && (
-            <div className="mt-4">
-              <LayerQuery service={selectedService} />
-            </div>
-          )}
-        </>
+        <ServiceTable
+          services={services}
+          onServiceSelect={(service) => {
+            setSelectedService(service);
+            setShowQueryModal(true);
+          }}
+        />
       )}
+
+      {/* Query Modal */}
+      <Modal
+        show={showQueryModal && selectedService !== null}
+        onHide={() => setShowQueryModal(false)}
+        size="xl"
+        centered
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Query Layer: {selectedService?.name}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {selectedService && <LayerQuery service={selectedService} />}
+        </Modal.Body>
+      </Modal>
 
       {/* No Results */}
       {!loading && services.length === 0 && !error && (

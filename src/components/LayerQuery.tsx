@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Card, Form, Button, Table, Alert, Spinner, Badge } from 'react-bootstrap';
+import { Form, Button, Table, Alert, Spinner, Badge } from 'react-bootstrap';
 import { ArcGISService, ArcGISQueryResponse } from '../types/arcgis.types';
 import { ArcGISServiceClient } from '../services/arcgisService';
 
@@ -136,13 +136,9 @@ const LayerQuery: React.FC<LayerQueryProps> = ({ service }) => {
   ];
 
   return (
-    <Card>
-      <Card.Header>
-        <h4>Query Layer: {service.name}</h4>
-      </Card.Header>
-      <Card.Body>
-        {/* Query Form */}
-        <Form>
+    <>
+      {/* Query Form */}
+      <Form>
           <Form.Group className="mb-3">
             <Form.Label>Select Layer/Table</Form.Label>
             <Form.Select
@@ -289,8 +285,8 @@ const LayerQuery: React.FC<LayerQueryProps> = ({ service }) => {
             )}
           </div>
         )}
-      </Card.Body>
-    </Card>
+      </Form>
+    </>
   );
 };
 

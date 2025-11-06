@@ -11,6 +11,7 @@ interface ServiceTableProps {
 const ServiceTable: React.FC<ServiceTableProps> = ({ services, onServiceSelect }) => {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [filterType, setFilterType] = useState<string>('all');
+  const [filterStatus, setFilterStatus] = useState<string>('all');
   const [selectedServiceName, setSelectedServiceName] = useState<string>('');
   const [showFavoritesOnly, setShowFavoritesOnly] = useState<boolean>(false);
   const [favorites, setFavorites] = useState(StorageService.getFavorites());
@@ -33,9 +34,23 @@ const ServiceTable: React.FC<ServiceTableProps> = ({ services, onServiceSelect }
 
       const matchesFavorites = !showFavoritesOnly || StorageService.isFavorite(service);
 
-      return matchesSearch && matchesType && matchesFavorites;
+      // Status filtering
+      let matchesStatus = true;
+      if (filterStatus !== 'all') {
+        if (filterStatus === 'accessible') {
+          matchesStatus = !service.requiresAuth && !service.isEmpty && !service.error;
+        } else if (filterStatus === 'auth-required') {
+          matchesStatus = service.requiresAuth;
+        } else if (filterStatus === 'empty') {
+          matchesStatus = service.isEmpty;
+        } else if (filterStatus === 'error') {
+          matchesStatus = !!service.error;
+        }
+      }
+
+      return matchesSearch && matchesType && matchesFavorites && matchesStatus;
     });
-  }, [services, searchTerm, filterType, showFavoritesOnly]);
+  }, [services, searchTerm, filterType, filterStatus, showFavoritesOnly]);
 
   const handleServiceClick = (service: ArcGISService) => {
     setSelectedServiceName(service.name);
@@ -76,7 +91,7 @@ const ServiceTable: React.FC<ServiceTableProps> = ({ services, onServiceSelect }
       'GeometryServer': 'warning',
       'ImageServer': 'secondary',
       'GPServer': 'dark',
-      'Folder': 'light',
+      'Folder': 'info',
     };
 
     return <Badge bg={colorMap[type] || 'secondary'}>{type}</Badge>;
@@ -135,6 +150,18 @@ const ServiceTable: React.FC<ServiceTableProps> = ({ services, onServiceSelect }
               {type === 'all' ? 'All Types' : type}
             </option>
           ))}
+        </Form.Select>
+
+        <Form.Select
+          style={{ flex: 1 }}
+          value={filterStatus}
+          onChange={(e) => setFilterStatus(e.target.value)}
+        >
+          <option value="all">All Status</option>
+          <option value="accessible">Accessible</option>
+          <option value="auth-required">Auth Required</option>
+          <option value="empty">Empty</option>
+          <option value="error">Error</option>
         </Form.Select>
       </div>
 
