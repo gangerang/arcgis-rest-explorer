@@ -15,6 +15,8 @@ const ServiceTable: React.FC<ServiceTableProps> = ({ services, onServiceSelect }
   const [selectedServiceName, setSelectedServiceName] = useState<string>('');
   const [showFavoritesOnly, setShowFavoritesOnly] = useState<boolean>(false);
   const [favorites, setFavorites] = useState(StorageService.getFavorites());
+  const [sortColumn, setSortColumn] = useState<string>('');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
   // Get unique service types for filter
   const serviceTypes = useMemo(() => {
@@ -22,9 +24,19 @@ const ServiceTable: React.FC<ServiceTableProps> = ({ services, onServiceSelect }
     return ['all', ...Array.from(types)];
   }, [services]);
 
-  // Filter services
+  // Sort handler
+  const handleSort = (column: string) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(column);
+      setSortDirection('asc');
+    }
+  };
+
+  // Filter and sort services
   const filteredServices = useMemo(() => {
-    return services.filter((service) => {
+    let filtered = services.filter((service) => {
       const matchesSearch =
         service.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (service.folder && service.folder.toLowerCase().includes(searchTerm.toLowerCase())) ||
@@ -50,7 +62,50 @@ const ServiceTable: React.FC<ServiceTableProps> = ({ services, onServiceSelect }
 
       return matchesSearch && matchesType && matchesFavorites && matchesStatus;
     });
-  }, [services, searchTerm, filterType, filterStatus, showFavoritesOnly]);
+
+    // Apply sorting
+    if (sortColumn) {
+      filtered = filtered.sort((a, b) => {
+        let aVal: any;
+        let bVal: any;
+
+        switch (sortColumn) {
+          case 'folder':
+            aVal = a.folder || '';
+            bVal = b.folder || '';
+            break;
+          case 'name':
+            aVal = a.name || '';
+            bVal = b.name || '';
+            break;
+          case 'type':
+            aVal = a.type || '';
+            bVal = b.type || '';
+            break;
+          case 'resources':
+            aVal = (a.layerCount || 0) + (a.tableCount || 0);
+            bVal = (b.layerCount || 0) + (b.tableCount || 0);
+            break;
+          case 'status':
+            aVal = a.requiresAuth ? 3 : a.isEmpty ? 2 : a.error ? 4 : 1;
+            bVal = b.requiresAuth ? 3 : b.isEmpty ? 2 : b.error ? 4 : 1;
+            break;
+          default:
+            return 0;
+        }
+
+        if (typeof aVal === 'string') {
+          return sortDirection === 'asc'
+            ? aVal.localeCompare(bVal)
+            : bVal.localeCompare(aVal);
+        } else {
+          return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
+        }
+      });
+    }
+
+    return filtered;
+  }, [services, searchTerm, filterType, filterStatus, showFavoritesOnly, sortColumn, sortDirection]);
 
   const handleServiceClick = (service: ArcGISService) => {
     setSelectedServiceName(service.name);
@@ -97,19 +152,20 @@ const ServiceTable: React.FC<ServiceTableProps> = ({ services, onServiceSelect }
     return <Badge bg={colorMap[type] || 'secondary'}>{type}</Badge>;
   };
 
-  const getResponseTimeBadge = (responseTime?: number) => {
-    if (!responseTime) return null;
-
-    let variant = 'success';
-    if (responseTime > 2000) variant = 'danger';
-    else if (responseTime > 500) variant = 'warning';
-
-    return (
-      <Badge bg={variant} title={`Response time: ${responseTime}ms`}>
-        {responseTime}ms
-      </Badge>
-    );
+  const getSortIndicator = (column: string) => {
+    if (sortColumn !== column) return ' ↕';
+    return sortDirection === 'asc' ? ' ↑' : ' ↓';
   };
+
+  const renderSortableHeader = (column: string, label: string) => (
+    <th
+      onClick={() => handleSort(column)}
+      style={{ cursor: 'pointer', userSelect: 'none' }}
+      title={`Sort by ${label}`}
+    >
+      {label}{getSortIndicator(column)}
+    </th>
+  );
 
   return (
     <div>
@@ -171,20 +227,18 @@ const ServiceTable: React.FC<ServiceTableProps> = ({ services, onServiceSelect }
           <thead style={{ position: 'sticky', top: 0, backgroundColor: '#fff', zIndex: 1 }}>
             <tr>
               <th style={{ width: '40px' }}>★</th>
-              <th>Folder</th>
-              <th>Service Name</th>
-              <th>Type</th>
-              <th>Layers</th>
-              <th>Tables</th>
-              <th>Status</th>
-              <th>Response</th>
+              {renderSortableHeader('folder', 'Folder')}
+              {renderSortableHeader('name', 'Service Name')}
+              {renderSortableHeader('type', 'Type')}
+              {renderSortableHeader('resources', 'Resources')}
+              {renderSortableHeader('status', 'Status')}
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             {filteredServices.length === 0 ? (
               <tr>
-                <td colSpan={9} className="text-center text-muted">
+                <td colSpan={7} className="text-center text-muted">
                   No services found matching your criteria
                 </td>
               </tr>
@@ -213,10 +267,30 @@ const ServiceTable: React.FC<ServiceTableProps> = ({ services, onServiceSelect }
                       ★
                     </Button>
                   </td>
-                  <td>{service.folder}</td>
+                  <td>
+                    {service.folder ? (
+                      <a
+                        href={`${service.url.split('/').slice(0, -1).join('/')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ textDecoration: 'none', color: 'inherit' }}
+                      >
+                        {service.folder}
+                      </a>
+                    ) : (
+                      '-'
+                    )}
+                  </td>
                   <td>
                     <div className="d-flex flex-column">
-                      <span>{service.name.split('/').pop()}</span>
+                      <a
+                        href={service.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ textDecoration: 'none', color: 'inherit' }}
+                      >
+                        {service.name.split('/').pop()}
+                      </a>
                       {service.description && (
                         <small className="text-muted">{service.description}</small>
                       )}
@@ -224,13 +298,9 @@ const ServiceTable: React.FC<ServiceTableProps> = ({ services, onServiceSelect }
                   </td>
                   <td>{getTypeBadge(service.type)}</td>
                   <td className="text-center">
-                    {service.layerCount !== undefined ? service.layerCount : '-'}
-                  </td>
-                  <td className="text-center">
-                    {service.tableCount !== undefined ? service.tableCount : '-'}
+                    {((service.layerCount || 0) + (service.tableCount || 0)) || '-'}
                   </td>
                   <td>{getStatusBadge(service)}</td>
-                  <td>{getResponseTimeBadge(service.responseTime)}</td>
                   <td>
                     {!service.isEmpty && !service.error && service.layerCount && service.layerCount > 0 ? (
                       <Button

@@ -6,6 +6,7 @@ import {
   ArcGISQueryResponse,
   QueryOptions,
   ServiceStatus,
+  ArcGISResource,
 } from '../types/arcgis.types';
 import { CacheService } from './cacheService';
 
@@ -435,12 +436,178 @@ export class ArcGISServiceClient {
   }
 
   /**
+   * Fetches all resources (layers and tables) from all services with detailed information
+   */
+  static async getResourceCatalog(
+    baseUrl: string,
+    useCache: boolean = true,
+    onProgress?: ProgressCallback
+  ): Promise<ArcGISResource[]> {
+    // Check cache first
+    if (useCache) {
+      const cacheKey = CacheService.KEYS.SERVICE_CATALOG(baseUrl + '_resources');
+      const cached = await CacheService.get<ArcGISResource[]>(cacheKey);
+      if (cached) {
+        console.log('Loaded resources from cache');
+        return cached;
+      }
+    }
+
+    const resources: ArcGISResource[] = [];
+    this.abortController = new AbortController();
+
+    try {
+      // First get all services
+      onProgress?.(0, 1, 'Fetching services...');
+      const services = await this.getCatalog(baseUrl, useCache, onProgress);
+
+      // Filter to only services that have layers or tables
+      const servicesWithResources = services.filter(
+        (s) => (s.layers && s.layers.length > 0) || (s.tables && s.tables.length > 0)
+      );
+
+      if (servicesWithResources.length === 0) {
+        return resources;
+      }
+
+      onProgress?.(0, servicesWithResources.length, 'Fetching resource details...');
+
+      // Fetch details for each resource in parallel (but in batches to avoid overwhelming the server)
+      const batchSize = 10;
+      for (let i = 0; i < servicesWithResources.length; i += batchSize) {
+        const batch = servicesWithResources.slice(i, i + batchSize);
+
+        const batchPromises = batch.map(async (service) => {
+          const serviceResources: ArcGISResource[] = [];
+
+          // Process layers
+          if (service.layers) {
+            for (const layer of service.layers) {
+              try {
+                const details = await this.getLayerDetails(service.url, layer.id, useCache);
+
+                serviceResources.push({
+                  id: layer.id,
+                  name: layer.name,
+                  type: 'Layer',
+                  serviceName: service.name,
+                  serviceType: service.type,
+                  serviceUrl: service.url,
+                  resourceUrl: `${service.url}/${layer.id}`,
+                  folder: service.folder,
+                  geometryType: details.geometryType || layer.geometryType,
+                  fieldCount: details.fields?.length,
+                  fields: details.fields,
+                  description: details.description,
+                  editFieldsInfo: (details as any).editFieldsInfo,
+                  hasTimestamp: !!(details as any).editFieldsInfo?.editDateField || !!(details as any).timeInfo,
+                  requiresAuth: false,
+                });
+              } catch (error) {
+                // If we can't fetch details, still add the basic info
+                serviceResources.push({
+                  id: layer.id,
+                  name: layer.name,
+                  type: 'Layer',
+                  serviceName: service.name,
+                  serviceType: service.type,
+                  serviceUrl: service.url,
+                  resourceUrl: `${service.url}/${layer.id}`,
+                  folder: service.folder,
+                  geometryType: layer.geometryType,
+                  requiresAuth: service.requiresAuth,
+                  error: 'Could not fetch details',
+                });
+              }
+            }
+          }
+
+          // Process tables
+          if (service.tables) {
+            for (const table of service.tables) {
+              try {
+                const details = await this.getLayerDetails(service.url, table.id, useCache);
+
+                serviceResources.push({
+                  id: table.id,
+                  name: table.name,
+                  type: 'Table',
+                  serviceName: service.name,
+                  serviceType: service.type,
+                  serviceUrl: service.url,
+                  resourceUrl: `${service.url}/${table.id}`,
+                  folder: service.folder,
+                  fieldCount: details.fields?.length,
+                  fields: details.fields,
+                  description: details.description,
+                  editFieldsInfo: (details as any).editFieldsInfo,
+                  hasTimestamp: !!(details as any).editFieldsInfo?.editDateField || !!(details as any).timeInfo,
+                  requiresAuth: false,
+                });
+              } catch (error) {
+                // If we can't fetch details, still add the basic info
+                serviceResources.push({
+                  id: table.id,
+                  name: table.name,
+                  type: 'Table',
+                  serviceName: service.name,
+                  serviceType: service.type,
+                  serviceUrl: service.url,
+                  resourceUrl: `${service.url}/${table.id}`,
+                  folder: service.folder,
+                  requiresAuth: service.requiresAuth,
+                  error: 'Could not fetch details',
+                });
+              }
+            }
+          }
+
+          return serviceResources;
+        });
+
+        const batchResults = await Promise.allSettled(batchPromises);
+        batchResults.forEach((result) => {
+          if (result.status === 'fulfilled') {
+            resources.push(...result.value);
+          }
+        });
+
+        onProgress?.(
+          Math.min(i + batchSize, servicesWithResources.length),
+          servicesWithResources.length,
+          `Processed ${Math.min(i + batchSize, servicesWithResources.length)} of ${servicesWithResources.length} services...`
+        );
+      }
+
+      onProgress?.(1, 1, 'Complete');
+
+      // Cache the results
+      if (useCache) {
+        const cacheKey = CacheService.KEYS.SERVICE_CATALOG(baseUrl + '_resources');
+        await CacheService.set(cacheKey, resources, CacheService.TTL.MEDIUM);
+      }
+    } catch (error) {
+      if (axios.isCancel(error)) {
+        console.log('Resource discovery cancelled');
+        throw new Error('Discovery cancelled');
+      }
+      console.error('Error fetching resource catalog:', error);
+      throw error;
+    }
+
+    return resources;
+  }
+
+  /**
    * Clear cache for a specific URL or all cache
    */
   static async clearCache(url?: string): Promise<void> {
     if (url) {
       const cacheKey = CacheService.KEYS.SERVICE_CATALOG(url);
       await CacheService.delete(cacheKey);
+      // Also clear resources cache
+      const resourcesCacheKey = CacheService.KEYS.SERVICE_CATALOG(url + '_resources');
+      await CacheService.delete(resourcesCacheKey);
     } else {
       await CacheService.clear();
     }

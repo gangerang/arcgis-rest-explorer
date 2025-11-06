@@ -107,3 +107,27 @@ export interface QueryOptions {
   resultRecordCount?: number;
   f?: string;
 }
+
+export interface ArcGISResource {
+  id: number;
+  name: string;
+  type: 'Layer' | 'Table';
+  serviceName: string;
+  serviceType: string;
+  serviceUrl: string;
+  resourceUrl: string;
+  folder?: string;
+  geometryType?: string;
+  fieldCount?: number;
+  fields?: ArcGISField[];
+  description?: string;
+  editFieldsInfo?: {
+    creationDateField?: string;
+    creatorField?: string;
+    editDateField?: string;
+    editorField?: string;
+  };
+  hasTimestamp?: boolean;
+  requiresAuth: boolean;
+  error?: string;
+}
