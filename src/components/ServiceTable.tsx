@@ -217,7 +217,7 @@ const ServiceTable: React.FC<ServiceTableProps> = ({ services, onServiceSelect }
       </div>
 
       {/* Services Table */}
-      <div style={{ maxHeight: '600px', overflowY: 'auto' }}>
+      <div>
         <Table striped bordered hover responsive>
           <thead style={{ position: 'sticky', top: 0, backgroundColor: '#fff', zIndex: 1 }}>
             <tr>

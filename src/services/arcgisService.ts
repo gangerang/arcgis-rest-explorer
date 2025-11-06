@@ -435,38 +435,6 @@ export class ArcGISServiceClient {
     return url;
   }
 
-  /**
-   * Gets the last edit date for a resource by querying the max value of the edit date field
-   */
-  private static async getLastEditDate(
-    serviceUrl: string,
-    resourceId: number,
-    editDateField: string
-  ): Promise<number | undefined> {
-    try {
-      const url = `${serviceUrl}/${resourceId}/query`;
-      const response = await axios.get(url, {
-        params: {
-          where: '1=1',
-          outFields: editDateField,
-          returnGeometry: false,
-          resultRecordCount: 1,
-          orderByFields: `${editDateField} DESC`,
-          f: 'json',
-        },
-        timeout: 5000,
-      });
-
-      if (response.data.features && response.data.features.length > 0) {
-        const value = response.data.features[0].attributes[editDateField];
-        return value ? Number(value) : undefined;
-      }
-    } catch (error) {
-      // Silently fail - not all resources will have data or support this query
-      return undefined;
-    }
-    return undefined;
-  }
 
   /**
    * Fetches all resources (layers and tables) from all services with detailed information
@@ -519,16 +487,10 @@ export class ArcGISServiceClient {
               try {
                 const details = await this.getLayerDetails(service.url, layer.id, useCache);
                 const editFieldsInfo = (details as any).editFieldsInfo;
+                const editingInfo = (details as any).editingInfo;
 
-                // Try to fetch the last edit date if editDateField exists
-                let lastEditDate: number | undefined;
-                if (editFieldsInfo?.editDateField) {
-                  lastEditDate = await this.getLastEditDate(
-                    service.url,
-                    layer.id,
-                    editFieldsInfo.editDateField
-                  );
-                }
+                // Get last edit date from editingInfo (layer metadata) - more reliable than querying
+                const lastEditDate = editingInfo?.lastEditDate;
 
                 serviceResources.push({
                   id: layer.id,
@@ -573,16 +535,10 @@ export class ArcGISServiceClient {
               try {
                 const details = await this.getLayerDetails(service.url, table.id, useCache);
                 const editFieldsInfo = (details as any).editFieldsInfo;
+                const editingInfo = (details as any).editingInfo;
 
-                // Try to fetch the last edit date if editDateField exists
-                let lastEditDate: number | undefined;
-                if (editFieldsInfo?.editDateField) {
-                  lastEditDate = await this.getLastEditDate(
-                    service.url,
-                    table.id,
-                    editFieldsInfo.editDateField
-                  );
-                }
+                // Get last edit date from editingInfo (layer metadata) - more reliable than querying
+                const lastEditDate = editingInfo?.lastEditDate;
 
                 serviceResources.push({
                   id: table.id,

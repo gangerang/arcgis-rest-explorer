@@ -128,14 +128,8 @@ const ResourceTable: React.FC<ResourceTableProps> = ({ resources, onResourceSele
       // Check if date is valid
       if (isNaN(date.getTime())) return '-';
 
-      // Format as YYYY-MM-DD HH:MM
-      return date.toLocaleString('en-US', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-      });
+      // Format as date-only (YYYY-MM-DD)
+      return date.toLocaleDateString('en-CA'); // en-CA gives YYYY-MM-DD format
     } catch {
       return '-';
     }
@@ -189,7 +183,7 @@ const ResourceTable: React.FC<ResourceTableProps> = ({ resources, onResourceSele
       </div>
 
       {/* Resources Table */}
-      <div style={{ maxHeight: '600px', overflowY: 'auto' }}>
+      <div>
         <Table striped bordered hover responsive size="sm">
           <thead style={{ position: 'sticky', top: 0, backgroundColor: '#fff', zIndex: 1 }}>
             <tr>
