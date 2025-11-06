@@ -59,15 +59,6 @@ code {
     display: none;
   }
 
-  /* Hide specific columns in ResourceTable on mobile */
-  .resource-table-mobile .hide-mobile-folder,
-  .resource-table-mobile .hide-mobile-service,
-  .resource-table-mobile .hide-mobile-geometry,
-  .resource-table-mobile .hide-mobile-fields,
-  .resource-table-mobile .hide-mobile-updated {
-    display: none;
-  }
-
   /* Stack filter controls vertically on mobile */
   .mobile-stack-filters {
     flex-direction: column !important;
@@ -185,11 +176,6 @@ code {
 
 /* Tablet: Optimize for medium screens */
 @media (min-width: 768px) and (max-width: 991px) {
-  /* Hide some columns on tablet for ResourceTable only (it has more columns) */
-  .resource-table-mobile .hide-tablet-updated {
-    display: none;
-  }
-
   .table {
     font-size: 0.9rem;
   }

@@ -101,24 +101,15 @@ const ResourceTable: React.FC<ResourceTableProps> = ({ resources, onResourceSele
     onResourceSelect(resource);
   };
 
-  const renderSortableHeader = (column: string, label: string) => {
-    let className = '';
-    if (column === 'folder') className = 'hide-mobile-folder';
-    if (column === 'service') className = 'hide-mobile-service';
-    if (column === 'geometry') className = 'hide-mobile-geometry';
-    if (column === 'fields') className = 'hide-mobile-fields';
-
-    return (
-      <th
-        onClick={() => handleSort(column)}
-        style={{ cursor: 'pointer', userSelect: 'none' }}
-        title={`Sort by ${label}`}
-        className={className}
-      >
-        {label}
-      </th>
-    );
-  };
+  const renderSortableHeader = (column: string, label: string) => (
+    <th
+      onClick={() => handleSort(column)}
+      style={{ cursor: 'pointer', userSelect: 'none' }}
+      title={`Sort by ${label}`}
+    >
+      {label}
+    </th>
+  );
 
   const getTypeBadge = (type: string) => {
     const colorMap: { [key: string]: string } = {
@@ -202,7 +193,7 @@ const ResourceTable: React.FC<ResourceTableProps> = ({ resources, onResourceSele
               {renderSortableHeader('type', 'Type')}
               {renderSortableHeader('geometry', 'Geometry')}
               {renderSortableHeader('fields', 'Fields')}
-              <th className="hide-mobile-updated hide-tablet-updated">Last Updated</th>
+              <th>Last Updated</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -223,7 +214,7 @@ const ResourceTable: React.FC<ResourceTableProps> = ({ resources, onResourceSele
                       : ''
                   }
                 >
-                  <td className="hide-mobile-folder">
+                  <td>
                     {resource.folder ? (
                       <a
                         href={`${resource.serviceUrl.split('/').slice(0, -1).join('/')}`}
@@ -237,7 +228,7 @@ const ResourceTable: React.FC<ResourceTableProps> = ({ resources, onResourceSele
                       '-'
                     )}
                   </td>
-                  <td className="hide-mobile-service">
+                  <td>
                     <div className="d-flex flex-column">
                       <a
                         href={resource.serviceUrl}
@@ -269,17 +260,17 @@ const ResourceTable: React.FC<ResourceTableProps> = ({ resources, onResourceSele
                     </div>
                   </td>
                   <td>{getTypeBadge(resource.type)}</td>
-                  <td className="hide-mobile-geometry">
+                  <td>
                     {resource.geometryType ? (
                       <Badge bg="secondary">{resource.geometryType}</Badge>
                     ) : (
                       '-'
                     )}
                   </td>
-                  <td className="text-center hide-mobile-fields">
+                  <td className="text-center">
                     {resource.fieldCount !== undefined ? resource.fieldCount : '-'}
                   </td>
-                  <td className="hide-mobile-updated hide-tablet-updated">
+                  <td>
                     <small>{formatLastUpdated(resource.lastEditDate)}</small>
                   </td>
                   <td>
