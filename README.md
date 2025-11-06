@@ -79,6 +79,39 @@ src/
 └── App.tsx                     # Root component
 ```
 
+## Deployment
+
+### Coolify Deployment
+
+This application is configured for deployment with Coolify using Docker:
+
+1. **In Coolify Dashboard**:
+   - Create a new application
+   - Connect your Git repository
+   - Coolify will auto-detect the Dockerfile
+   - Set port to `80`
+   - Deploy!
+
+2. **Local Testing** (optional):
+   ```bash
+   docker-compose up --build
+   ```
+   Then visit http://localhost:3000
+
+3. **Manual Docker Build**:
+   ```bash
+   docker build -t arcgis-explorer .
+   docker run -p 3000:80 arcgis-explorer
+   ```
+
+**Features**:
+- Multi-stage build (small ~20MB image)
+- Nginx for fast static file serving
+- Gzip compression enabled
+- SPA routing support
+- Health check endpoint at `/health`
+- Security headers configured
+
 ## License
 
 MIT
