@@ -285,7 +285,6 @@ const LayerQuery: React.FC<LayerQueryProps> = ({ service }) => {
             )}
           </div>
         )}
-      </Form>
     </>
   );
 };
