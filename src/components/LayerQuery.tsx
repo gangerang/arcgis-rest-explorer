@@ -96,6 +96,39 @@ const LayerQuery: React.FC<LayerQueryProps> = ({ service }) => {
     window.URL.revokeObjectURL(url);
   };
 
+  const handleExportGeoJSON = () => {
+    if (!queryResult || !queryResult.features) {
+      return;
+    }
+
+    // Convert ArcGIS REST format to GeoJSON
+    const geojson = {
+      type: 'FeatureCollection',
+      features: queryResult.features.map((feature) => ({
+        type: 'Feature',
+        properties: feature.attributes,
+        geometry: feature.geometry || null,
+      })),
+      crs: queryResult.spatialReference
+        ? {
+            type: 'name',
+            properties: {
+              name: `EPSG:${queryResult.spatialReference.wkid || queryResult.spatialReference.latestWkid || 4326}`,
+            },
+          }
+        : undefined,
+    };
+
+    const json = JSON.stringify(geojson, null, 2);
+    const blob = new Blob([json], { type: 'application/geo+json' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${service.name}_layer${selectedLayerId}_query.geojson`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
   // Get layers and tables for selection
   const layerOptions = [
     ...(service.layers || []),
@@ -207,6 +240,11 @@ const LayerQuery: React.FC<LayerQueryProps> = ({ service }) => {
                 <Button size="sm" variant="outline-info" onClick={handleExportJSON}>
                   Export JSON
                 </Button>
+                {includeGeometry && (
+                  <Button size="sm" variant="outline-primary" onClick={handleExportGeoJSON}>
+                    Export GeoJSON
+                  </Button>
+                )}
               </div>
             </div>
 

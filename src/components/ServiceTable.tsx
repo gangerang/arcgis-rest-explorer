@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import { Table, Form, Badge, Button, InputGroup } from 'react-bootstrap';
+import { Table, Form, Badge, Button, InputGroup, FormCheck } from 'react-bootstrap';
 import { ArcGISService } from '../types/arcgis.types';
+import { StorageService } from '../services/storageService';
 
 interface ServiceTableProps {
   services: ArcGISService[];
@@ -11,6 +12,8 @@ const ServiceTable: React.FC<ServiceTableProps> = ({ services, onServiceSelect }
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [filterType, setFilterType] = useState<string>('all');
   const [selectedServiceName, setSelectedServiceName] = useState<string>('');
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState<boolean>(false);
+  const [favorites, setFavorites] = useState(StorageService.getFavorites());
 
   // Get unique service types for filter
   const serviceTypes = useMemo(() => {
@@ -28,13 +31,28 @@ const ServiceTable: React.FC<ServiceTableProps> = ({ services, onServiceSelect }
 
       const matchesType = filterType === 'all' || service.type === filterType;
 
-      return matchesSearch && matchesType;
+      const matchesFavorites = !showFavoritesOnly || StorageService.isFavorite(service);
+
+      return matchesSearch && matchesType && matchesFavorites;
     });
-  }, [services, searchTerm, filterType]);
+  }, [services, searchTerm, filterType, showFavoritesOnly]);
 
   const handleServiceClick = (service: ArcGISService) => {
     setSelectedServiceName(service.name);
     onServiceSelect(service);
+  };
+
+  const toggleFavorite = (service: ArcGISService, e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    if (StorageService.isFavorite(service)) {
+      const favoriteId = service.url;
+      StorageService.removeFavorite(favoriteId);
+    } else {
+      StorageService.addFavorite(service);
+    }
+
+    setFavorites(StorageService.getFavorites());
   };
 
   const getStatusBadge = (service: ArcGISService) => {
@@ -64,10 +82,30 @@ const ServiceTable: React.FC<ServiceTableProps> = ({ services, onServiceSelect }
     return <Badge bg={colorMap[type] || 'secondary'}>{type}</Badge>;
   };
 
+  const getResponseTimeBadge = (responseTime?: number) => {
+    if (!responseTime) return null;
+
+    let variant = 'success';
+    if (responseTime > 2000) variant = 'danger';
+    else if (responseTime > 500) variant = 'warning';
+
+    return (
+      <Badge bg={variant} title={`Response time: ${responseTime}ms`}>
+        {responseTime}ms
+      </Badge>
+    );
+  };
+
   return (
     <div>
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h3>Services ({filteredServices.length})</h3>
+        <FormCheck
+          type="checkbox"
+          label={`Show Favorites Only (${favorites.length})`}
+          checked={showFavoritesOnly}
+          onChange={(e) => setShowFavoritesOnly(e.target.checked)}
+        />
       </div>
 
       {/* Search and Filter */}
@@ -105,19 +143,21 @@ const ServiceTable: React.FC<ServiceTableProps> = ({ services, onServiceSelect }
         <Table striped bordered hover responsive>
           <thead style={{ position: 'sticky', top: 0, backgroundColor: '#fff', zIndex: 1 }}>
             <tr>
+              <th style={{ width: '40px' }}>★</th>
               <th>Folder</th>
               <th>Service Name</th>
               <th>Type</th>
               <th>Layers</th>
               <th>Tables</th>
               <th>Status</th>
+              <th>Response</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             {filteredServices.length === 0 ? (
               <tr>
-                <td colSpan={7} className="text-center text-muted">
+                <td colSpan={9} className="text-center text-muted">
                   No services found matching your criteria
                 </td>
               </tr>
@@ -127,6 +167,25 @@ const ServiceTable: React.FC<ServiceTableProps> = ({ services, onServiceSelect }
                   key={`${service.name}-${index}`}
                   className={selectedServiceName === service.name ? 'table-active' : ''}
                 >
+                  <td className="text-center">
+                    <Button
+                      variant="link"
+                      size="sm"
+                      className="p-0 text-decoration-none"
+                      style={{
+                        fontSize: '1.5rem',
+                        color: StorageService.isFavorite(service) ? '#ffc107' : '#dee2e6',
+                      }}
+                      onClick={(e) => toggleFavorite(service, e)}
+                      title={
+                        StorageService.isFavorite(service)
+                          ? 'Remove from favorites'
+                          : 'Add to favorites'
+                      }
+                    >
+                      ★
+                    </Button>
+                  </td>
                   <td>{service.folder}</td>
                   <td>
                     <div className="d-flex flex-column">
@@ -144,6 +203,7 @@ const ServiceTable: React.FC<ServiceTableProps> = ({ services, onServiceSelect }
                     {service.tableCount !== undefined ? service.tableCount : '-'}
                   </td>
                   <td>{getStatusBadge(service)}</td>
+                  <td>{getResponseTimeBadge(service.responseTime)}</td>
                   <td>
                     {!service.isEmpty && !service.error && service.layerCount && service.layerCount > 0 ? (
                       <Button

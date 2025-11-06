@@ -26,6 +26,7 @@ export interface ArcGISService {
   capabilities?: string;
   layers?: ArcGISLayer[];
   tables?: ArcGISTable[];
+  responseTime?: number;
 }
 
 export interface ArcGISLayer {
@@ -96,6 +97,7 @@ export interface ServiceStatus {
   isEmpty: boolean;
   redirected: boolean;
   error?: string;
+  responseTime?: number;
 }
 
 export interface QueryOptions {
