@@ -11,18 +11,11 @@ interface ResourceTableProps {
 const ResourceTable: React.FC<ResourceTableProps> = ({ resources, onResourceSelect }) => {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [filterType, setFilterType] = useState<string>('all');
-  const [filterGeometryType, setFilterGeometryType] = useState<string>('all');
   const [selectedResourceId, setSelectedResourceId] = useState<string>('');
   const [sortColumn, setSortColumn] = useState<string>('');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [recordCounts, setRecordCounts] = useState<Map<string, number>>(new Map());
   const [loadingCounts, setLoadingCounts] = useState<Set<string>>(new Set());
-
-  // Get unique geometry types for filter
-  const geometryTypes = useMemo(() => {
-    const types = new Set(resources.map((r) => r.geometryType).filter((t) => t));
-    return ['all', ...Array.from(types)];
-  }, [resources]);
 
   // Sort handler
   const handleSort = (column: string) => {
@@ -45,10 +38,7 @@ const ResourceTable: React.FC<ResourceTableProps> = ({ resources, onResourceSele
 
       const matchesType = filterType === 'all' || resource.type === filterType;
 
-      const matchesGeometryType =
-        filterGeometryType === 'all' || resource.geometryType === filterGeometryType;
-
-      return matchesSearch && matchesType && matchesGeometryType;
+      return matchesSearch && matchesType;
     });
 
     // Apply sorting
@@ -74,10 +64,6 @@ const ResourceTable: React.FC<ResourceTableProps> = ({ resources, onResourceSele
             aVal = a.type || '';
             bVal = b.type || '';
             break;
-          case 'geometry':
-            aVal = a.geometryType || '';
-            bVal = b.geometryType || '';
-            break;
           case 'fields':
             aVal = a.fieldCount || 0;
             bVal = b.fieldCount || 0;
@@ -97,11 +83,30 @@ const ResourceTable: React.FC<ResourceTableProps> = ({ resources, onResourceSele
     }
 
     return filtered;
-  }, [resources, searchTerm, filterType, filterGeometryType, sortColumn, sortDirection]);
+  }, [resources, searchTerm, filterType, sortColumn, sortDirection]);
 
   const handleResourceClick = (resource: ArcGISResource) => {
     setSelectedResourceId(`${resource.serviceName}-${resource.id}`);
     onResourceSelect(resource);
+  };
+
+  const getGeometryEmoji = (geometryType?: string): string => {
+    if (!geometryType) return '';
+
+    const geometryMap: { [key: string]: string } = {
+      'esriGeometryPoint': '📍',
+      'Point': '📍',
+      'esriGeometryPolyline': '━',
+      'Polyline': '━',
+      'esriGeometryPolygon': '⬜',
+      'Polygon': '⬜',
+      'esriGeometryMultipoint': '📍📍',
+      'Multipoint': '📍📍',
+      'esriGeometryEnvelope': '📦',
+      'Envelope': '📦',
+    };
+
+    return geometryMap[geometryType] || '';
   };
 
   const handleGetRecordCount = async (resource: ArcGISResource) => {
@@ -212,19 +217,6 @@ const ResourceTable: React.FC<ResourceTableProps> = ({ resources, onResourceSele
           <option value="Layer">Layers</option>
           <option value="Table">Tables</option>
         </Form.Select>
-
-        <Form.Select
-          style={{ flex: 1 }}
-          value={filterGeometryType}
-          onChange={(e) => setFilterGeometryType(e.target.value)}
-        >
-          <option value="all">All Geometries</option>
-          {geometryTypes.slice(1).map((type) => (
-            <option key={type} value={type}>
-              {type}
-            </option>
-          ))}
-        </Form.Select>
       </div>
 
       {/* Resources Table */}
@@ -236,7 +228,6 @@ const ResourceTable: React.FC<ResourceTableProps> = ({ resources, onResourceSele
               {renderSortableHeader('service', 'Service')}
               {renderSortableHeader('name', 'Resource Name')}
               {renderSortableHeader('type', 'Type')}
-              {renderSortableHeader('geometry', 'Geometry')}
               {renderSortableHeader('fields', 'Fields')}
               <th>Record Count</th>
               <th>Last Updated</th>
@@ -246,7 +237,7 @@ const ResourceTable: React.FC<ResourceTableProps> = ({ resources, onResourceSele
           <tbody>
             {filteredResources.length === 0 ? (
               <tr>
-                <td colSpan={9} className="text-center text-muted">
+                <td colSpan={8} className="text-center text-muted">
                   No resources found matching your criteria
                 </td>
               </tr>
@@ -305,13 +296,13 @@ const ResourceTable: React.FC<ResourceTableProps> = ({ resources, onResourceSele
                       )}
                     </div>
                   </td>
-                  <td>{getTypeBadge(resource.type)}</td>
                   <td>
-                    {resource.geometryType ? (
-                      <Badge bg="secondary">{resource.geometryType}</Badge>
-                    ) : (
-                      '-'
-                    )}
+                    <div className="d-flex align-items-center gap-1">
+                      {getTypeBadge(resource.type)}
+                      {resource.geometryType && (
+                        <span title={resource.geometryType}>{getGeometryEmoji(resource.geometryType)}</span>
+                      )}
+                    </div>
                   </td>
                   <td className="text-center">
                     {resource.fieldCount !== undefined ? resource.fieldCount : '-'}
