@@ -136,13 +136,13 @@ const ResourceTable: React.FC<ResourceTableProps> = ({ resources, onResourceSele
   };
 
   return (
-    <div>
+    <div className="resource-table-mobile">
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h3>Resources ({filteredResources.length})</h3>
       </div>
 
       {/* Search and Filter */}
-      <div className="mb-3 d-flex gap-2">
+      <div className="mb-3 d-flex gap-2 mobile-stack-filters">
         <InputGroup style={{ flex: 2 }}>
           <InputGroup.Text>Search</InputGroup.Text>
           <Form.Control
@@ -183,8 +183,8 @@ const ResourceTable: React.FC<ResourceTableProps> = ({ resources, onResourceSele
       </div>
 
       {/* Resources Table */}
-      <div>
-        <Table striped bordered hover responsive size="sm">
+      <div className="table-responsive">
+        <Table striped bordered hover size="sm">
           <thead style={{ position: 'sticky', top: 0, backgroundColor: '#fff', zIndex: 1 }}>
             <tr>
               {renderSortableHeader('folder', 'Folder')}
