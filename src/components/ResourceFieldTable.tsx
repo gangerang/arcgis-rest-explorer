@@ -87,6 +87,25 @@ export const ResourceFieldTable: React.FC<ResourceFieldTableProps> = ({
     return typeMap[type] || type;
   };
 
+  const getGeometryEmoji = (geometryType?: string): string => {
+    if (!geometryType) return '';
+
+    const geometryMap: { [key: string]: string } = {
+      'esriGeometryPoint': '📍',
+      'Point': '📍',
+      'esriGeometryPolyline': '━',
+      'Polyline': '━',
+      'esriGeometryPolygon': '⬜',
+      'Polygon': '⬜',
+      'esriGeometryMultipoint': '📍📍',
+      'Multipoint': '📍📍',
+      'esriGeometryEnvelope': '📦',
+      'Envelope': '📦',
+    };
+
+    return geometryMap[geometryType] || '';
+  };
+
   return (
     <div>
       <div className="mb-3">
@@ -206,14 +225,14 @@ export const ResourceFieldTable: React.FC<ResourceFieldTableProps> = ({
                             </div>
                           </td>
                           <td rowSpan={rowSpan}>
-                            <Badge bg={resource.type === 'Layer' ? 'primary' : 'info'}>
-                              {resource.type}
-                            </Badge>
-                            {resource.geometryType && (
-                              <div className="small text-muted mt-1">
-                                {resource.geometryType}
-                              </div>
-                            )}
+                            <div className="d-flex align-items-center gap-1">
+                              <Badge bg={resource.type === 'Layer' ? 'primary' : 'info'}>
+                                {resource.type}
+                              </Badge>
+                              {resource.geometryType && (
+                                <span title={resource.geometryType}>{getGeometryEmoji(resource.geometryType)}</span>
+                              )}
+                            </div>
                           </td>
                         </>
                       )}
