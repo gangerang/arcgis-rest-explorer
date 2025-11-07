@@ -5,11 +5,12 @@ import { ArcGISServiceClient } from '../services/arcgisService';
 import { StorageService } from '../services/storageService';
 import ServiceTable from './ServiceTable';
 import ResourceTable from './ResourceTable';
+import ResourceFieldTable from './ResourceFieldTable';
 import LayerQuery from './LayerQuery';
 
 const ServiceExplorer: React.FC = () => {
   const [url, setUrl] = useState<string>('https://example.com/arcgis/rest/services');
-  const [viewMode, setViewMode] = useState<'services' | 'resources'>('services');
+  const [viewMode, setViewMode] = useState<'services' | 'resources' | 'fields'>('services');
   const [services, setServices] = useState<ArcGISService[]>([]);
   const [resources, setResources] = useState<ArcGISResource[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -29,7 +30,7 @@ const ServiceExplorer: React.FC = () => {
     setHistory(StorageService.getHistory());
   }, []);
 
-  const handleExplore = async (mode: 'services' | 'resources', useCache: boolean = true) => {
+  const handleExplore = async (mode: 'services' | 'resources' | 'fields', useCache: boolean = true) => {
     if (!url.trim()) {
       setError('Please enter a valid URL');
       return;
@@ -57,6 +58,7 @@ const ServiceExplorer: React.FC = () => {
         );
         setServices(fetchedServices);
       } else {
+        // Both 'resources' and 'fields' modes fetch resource data
         const fetchedResources = await ArcGISServiceClient.getResourceCatalog(
           normalizedUrl,
           useCache,
@@ -192,6 +194,14 @@ const ServiceExplorer: React.FC = () => {
                     <span className="d-none d-lg-inline">Explore Resources</span>
                     <span className="d-inline d-lg-none">Resources</span>
                   </Button>
+                  <Button
+                    onClick={() => handleExplore('fields', true)}
+                    variant="success"
+                    className="flex-grow-1"
+                  >
+                    <span className="d-none d-lg-inline">Explore Fields</span>
+                    <span className="d-inline d-lg-none">Fields</span>
+                  </Button>
                 </>
               )}
               {loading && (
@@ -269,6 +279,13 @@ const ServiceExplorer: React.FC = () => {
         <ResourceTable
           resources={resources}
           onResourceSelect={handleResourceSelect}
+        />
+      )}
+
+      {viewMode === 'fields' && resources.length > 0 && (
+        <ResourceFieldTable
+          resources={resources}
+          onQueryClick={handleResourceSelect}
         />
       )}
 
