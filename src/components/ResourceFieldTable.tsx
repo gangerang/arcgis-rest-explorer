@@ -5,7 +5,6 @@ import { Search, XCircle } from 'react-bootstrap-icons';
 
 interface ResourceFieldTableProps {
   resources: ArcGISResource[];
-  onResourceClick?: (resource: ArcGISResource) => void;
   onQueryClick?: (resource: ArcGISResource) => void;
 }
 
@@ -16,7 +15,6 @@ interface ExpandedFieldRow {
 
 export const ResourceFieldTable: React.FC<ResourceFieldTableProps> = ({
   resources,
-  onResourceClick,
   onQueryClick,
 }) => {
   const [resourceSearchTerm, setResourceSearchTerm] = useState<string>('');
@@ -148,8 +146,8 @@ export const ResourceFieldTable: React.FC<ResourceFieldTableProps> = ({
         <Table striped bordered hover size="sm">
           <thead className="table-light">
             <tr>
-              <th style={{ width: '15%' }}>Resource</th>
               <th style={{ width: '10%' }}>Service</th>
+              <th style={{ width: '15%' }}>Resource</th>
               <th style={{ width: '8%' }}>Type</th>
               <th style={{ width: '15%' }}>Field Name</th>
               <th style={{ width: '15%' }}>Field Alias</th>
@@ -180,31 +178,32 @@ export const ResourceFieldTable: React.FC<ResourceFieldTableProps> = ({
                       {isFirstFieldInGroup && (
                         <>
                           <td rowSpan={rowSpan}>
-                            <div>
-                              <button
-                                className="btn btn-link btn-sm p-0 text-start text-decoration-none"
-                                onClick={() => onResourceClick?.(resource)}
-                                style={{
-                                  cursor: onResourceClick ? 'pointer' : 'default',
-                                  wordBreak: 'break-word'
-                                }}
+                            <div className="d-flex flex-column">
+                              <a
+                                href={resource.serviceUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{ textDecoration: 'none', color: 'inherit', fontSize: '0.9em' }}
                               >
-                                {resource.name}
-                              </button>
-                              {resource.folder && (
-                                <div className="text-muted small">
-                                  {resource.folder}
-                                </div>
-                              )}
+                                {resource.serviceName.split('/').pop()}
+                              </a>
+                              <small className="text-muted">{resource.serviceType}</small>
                             </div>
                           </td>
                           <td rowSpan={rowSpan}>
-                            <div className="text-truncate" title={resource.serviceName}>
-                              {resource.serviceName}
+                            <div className="d-flex flex-column">
+                              <a
+                                href={resource.resourceUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{ textDecoration: 'none', color: 'inherit' }}
+                              >
+                                {resource.name}
+                              </a>
+                              {resource.folder && (
+                                <small className="text-muted">{resource.folder}</small>
+                              )}
                             </div>
-                            <Badge bg="secondary" className="mt-1">
-                              {resource.serviceType}
-                            </Badge>
                           </td>
                           <td rowSpan={rowSpan}>
                             <Badge bg={resource.type === 'Layer' ? 'primary' : 'info'}>
