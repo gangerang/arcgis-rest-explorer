@@ -25,10 +25,42 @@ const ServiceExplorer: React.FC = () => {
   });
   const [history, setHistory] = useState(StorageService.getHistory());
   const [showHistory, setShowHistory] = useState(false);
+  const [initialLoad, setInitialLoad] = useState(true);
 
+  // Check for URL parameters on initial load
   useEffect(() => {
     setHistory(StorageService.getHistory());
+
+    const params = new URLSearchParams(window.location.search);
+    const urlParam = params.get('url');
+    const modeParam = params.get('mode') as 'services' | 'resources' | 'fields' | null;
+
+    if (urlParam) {
+      setUrl(urlParam);
+
+      // Auto-trigger explore if URL parameter is present
+      const exploreMode = modeParam && ['services', 'resources', 'fields'].includes(modeParam)
+        ? modeParam
+        : 'services';
+
+      // Store the mode to trigger after URL is set
+      sessionStorage.setItem('autoExploreMode', exploreMode);
+    }
+
+    setInitialLoad(false);
   }, []);
+
+  // Auto-trigger explore when URL is populated from parameter
+  useEffect(() => {
+    if (!initialLoad) {
+      const autoExploreMode = sessionStorage.getItem('autoExploreMode');
+      if (autoExploreMode && url && url !== 'https://example.com/arcgis/rest/services') {
+        sessionStorage.removeItem('autoExploreMode');
+        handleExplore(autoExploreMode as 'services' | 'resources' | 'fields', true);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialLoad, url]);
 
   const handleExplore = async (mode: 'services' | 'resources' | 'fields', useCache: boolean = true) => {
     if (!url.trim()) {
