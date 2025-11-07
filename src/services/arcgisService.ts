@@ -612,6 +612,58 @@ export class ArcGISServiceClient {
   }
 
   /**
+   * Gets the record count for a specific resource (layer or table)
+   */
+  static async getRecordCount(
+    serviceUrl: string,
+    layerId: number,
+    useCache: boolean = true
+  ): Promise<number> {
+    // Check cache first
+    if (useCache) {
+      const cacheKey = CacheService.KEYS.QUERY_RESULT(
+        serviceUrl,
+        layerId,
+        'count'
+      );
+      const cached = await CacheService.get<number>(cacheKey);
+      if (cached !== null && cached !== undefined) {
+        return cached;
+      }
+    }
+
+    const url = `${serviceUrl}/${layerId}/query`;
+
+    try {
+      const response = await axios.get(url, {
+        params: {
+          where: '1=1',
+          returnCountOnly: true,
+          f: 'json',
+        },
+        timeout: 30000,
+      });
+
+      const count = response.data.count;
+
+      // Cache the result
+      if (useCache) {
+        const cacheKey = CacheService.KEYS.QUERY_RESULT(
+          serviceUrl,
+          layerId,
+          'count'
+        );
+        await CacheService.set(cacheKey, count, CacheService.TTL.MEDIUM);
+      }
+
+      return count;
+    } catch (error) {
+      console.error('Error fetching record count:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Clear cache for a specific URL or all cache
    */
   static async clearCache(url?: string): Promise<void> {
