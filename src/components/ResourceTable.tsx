@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import { Table, Form, Badge, Button, InputGroup } from 'react-bootstrap';
+import { Table, Form, Badge, Button, InputGroup, Spinner } from 'react-bootstrap';
 import { ArcGISResource } from '../types/arcgis.types';
+import { ArcGISServiceClient } from '../services/arcgisService';
 
 interface ResourceTableProps {
   resources: ArcGISResource[];
@@ -14,6 +15,8 @@ const ResourceTable: React.FC<ResourceTableProps> = ({ resources, onResourceSele
   const [selectedResourceId, setSelectedResourceId] = useState<string>('');
   const [sortColumn, setSortColumn] = useState<string>('');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [recordCounts, setRecordCounts] = useState<Map<string, number>>(new Map());
+  const [loadingCounts, setLoadingCounts] = useState<Set<string>>(new Set());
 
   // Get unique geometry types for filter
   const geometryTypes = useMemo(() => {
@@ -99,6 +102,48 @@ const ResourceTable: React.FC<ResourceTableProps> = ({ resources, onResourceSele
   const handleResourceClick = (resource: ArcGISResource) => {
     setSelectedResourceId(`${resource.serviceName}-${resource.id}`);
     onResourceSelect(resource);
+  };
+
+  const handleGetRecordCount = async (resource: ArcGISResource) => {
+    const resourceKey = `${resource.serviceName}-${resource.id}`;
+
+    // Don't fetch if already loading
+    if (loadingCounts.has(resourceKey)) {
+      return;
+    }
+
+    // Mark as loading
+    setLoadingCounts(prev => new Set(prev).add(resourceKey));
+
+    try {
+      const count = await ArcGISServiceClient.getRecordCount(
+        resource.serviceUrl,
+        resource.id,
+        true
+      );
+
+      // Update record counts
+      setRecordCounts(prev => {
+        const newMap = new Map(prev);
+        newMap.set(resourceKey, count);
+        return newMap;
+      });
+    } catch (error) {
+      console.error('Error fetching record count:', error);
+      // Set error state by using -1 to indicate error
+      setRecordCounts(prev => {
+        const newMap = new Map(prev);
+        newMap.set(resourceKey, -1);
+        return newMap;
+      });
+    } finally {
+      // Remove from loading
+      setLoadingCounts(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(resourceKey);
+        return newSet;
+      });
+    }
   };
 
   const renderSortableHeader = (column: string, label: string) => (
@@ -193,6 +238,7 @@ const ResourceTable: React.FC<ResourceTableProps> = ({ resources, onResourceSele
               {renderSortableHeader('type', 'Type')}
               {renderSortableHeader('geometry', 'Geometry')}
               {renderSortableHeader('fields', 'Fields')}
+              <th>Record Count</th>
               <th>Last Updated</th>
               <th>Actions</th>
             </tr>
@@ -200,7 +246,7 @@ const ResourceTable: React.FC<ResourceTableProps> = ({ resources, onResourceSele
           <tbody>
             {filteredResources.length === 0 ? (
               <tr>
-                <td colSpan={8} className="text-center text-muted">
+                <td colSpan={9} className="text-center text-muted">
                   No resources found matching your criteria
                 </td>
               </tr>
@@ -269,6 +315,34 @@ const ResourceTable: React.FC<ResourceTableProps> = ({ resources, onResourceSele
                   </td>
                   <td className="text-center">
                     {resource.fieldCount !== undefined ? resource.fieldCount : '-'}
+                  </td>
+                  <td className="text-center">
+                    {(() => {
+                      const resourceKey = `${resource.serviceName}-${resource.id}`;
+                      const count = recordCounts.get(resourceKey);
+                      const isLoading = loadingCounts.has(resourceKey);
+
+                      if (isLoading) {
+                        return <Spinner animation="border" size="sm" />;
+                      } else if (count !== undefined) {
+                        return count === -1 ? (
+                          <span className="text-danger">Error</span>
+                        ) : (
+                          <span>{count.toLocaleString()}</span>
+                        );
+                      } else {
+                        return (
+                          <Button
+                            size="sm"
+                            variant="outline-secondary"
+                            onClick={() => handleGetRecordCount(resource)}
+                            disabled={!!resource.error}
+                          >
+                            Count
+                          </Button>
+                        );
+                      }
+                    })()}
                   </td>
                   <td>
                     <small>{formatLastUpdated(resource.lastEditDate)}</small>

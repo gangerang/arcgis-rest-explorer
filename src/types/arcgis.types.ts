@@ -129,6 +129,7 @@ export interface ArcGISResource {
   };
   hasTimestamp?: boolean;
   lastEditDate?: number; // Unix timestamp in milliseconds
+  recordCount?: number; // Number of records in the resource
   requiresAuth: boolean;
   error?: string;
 }
