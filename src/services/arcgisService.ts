@@ -76,7 +76,7 @@ export class ArcGISServiceClient {
       // Cache the results
       if (useCache) {
         const cacheKey = CacheService.KEYS.SERVICE_CATALOG(baseUrl);
-        await CacheService.set(cacheKey, services, CacheService.TTL.MEDIUM);
+        await CacheService.set(cacheKey, services, CacheService.TTL.LONG);
       }
     } catch (error) {
       if (axios.isCancel(error)) {
@@ -193,7 +193,7 @@ export class ArcGISServiceClient {
     const url = folder ? `${baseUrl}/${folder}` : baseUrl;
     const response = await axios.get(url, {
       params: { f: 'json' },
-      timeout: 10000,
+      timeout: 60000,
       signal: this.abortController?.signal,
     });
     return response.data;
@@ -215,7 +215,7 @@ export class ArcGISServiceClient {
     const startTime = Date.now();
     const response = await axios.get(serviceUrl, {
       params: { f: 'json' },
-      timeout: 10000,
+      timeout: 60000,
     });
 
     const data = response.data;
@@ -239,7 +239,7 @@ export class ArcGISServiceClient {
     try {
       const response = await axios.get(url, {
         params: { f: 'json' },
-        timeout: 10000,
+        timeout: 60000,
         maxRedirects: 0,
         validateStatus: (status) => status < 500,
       });
@@ -337,7 +337,7 @@ export class ArcGISServiceClient {
     const url = `${serviceUrl}/${layerId}`;
     const response = await axios.get(url, {
       params: { f: 'json' },
-      timeout: 10000,
+      timeout: 60000,
     });
 
     const data = response.data;
@@ -385,7 +385,7 @@ export class ArcGISServiceClient {
 
     const response = await axios.get(url, {
       params,
-      timeout: 30000,
+      timeout: 60000,
     });
 
     const data = response.data;
@@ -597,7 +597,7 @@ export class ArcGISServiceClient {
       // Cache the results
       if (useCache) {
         const cacheKey = CacheService.KEYS.SERVICE_CATALOG(baseUrl + '_resources');
-        await CacheService.set(cacheKey, resources, CacheService.TTL.MEDIUM);
+        await CacheService.set(cacheKey, resources, CacheService.TTL.LONG);
       }
     } catch (error) {
       if (axios.isCancel(error)) {
@@ -641,7 +641,7 @@ export class ArcGISServiceClient {
           returnCountOnly: true,
           f: 'json',
         },
-        timeout: 30000,
+        timeout: 60000,
       });
 
       const count = response.data.count;
@@ -653,7 +653,7 @@ export class ArcGISServiceClient {
           layerId,
           'count'
         );
-        await CacheService.set(cacheKey, count, CacheService.TTL.MEDIUM);
+        await CacheService.set(cacheKey, count, CacheService.TTL.LONG);
       }
 
       return count;
