@@ -68,6 +68,10 @@ const ResourceTable: React.FC<ResourceTableProps> = ({ resources, onResourceSele
             aVal = a.fieldCount || 0;
             bVal = b.fieldCount || 0;
             break;
+          case 'lastUpdated':
+            aVal = a.lastEditDate || 0;
+            bVal = b.lastEditDate || 0;
+            break;
           default:
             return 0;
         }
@@ -230,7 +234,7 @@ const ResourceTable: React.FC<ResourceTableProps> = ({ resources, onResourceSele
               {renderSortableHeader('type', 'Type')}
               {renderSortableHeader('fields', 'Fields')}
               <th>Record Count</th>
-              <th>Last Updated</th>
+              {renderSortableHeader('lastUpdated', 'Last Updated')}
               <th>Actions</th>
             </tr>
           </thead>
