@@ -3,6 +3,7 @@ import { Container, Form, Button, Alert, Spinner, ProgressBar, Dropdown, ButtonG
 import { ArcGISService, ArcGISResource } from '../types/arcgis.types';
 import { ArcGISServiceClient } from '../services/arcgisService';
 import { StorageService } from '../services/storageService';
+import { AuthService } from '../services/authService';
 import ServiceTable from './ServiceTable';
 import ResourceTable from './ResourceTable';
 import ResourceFieldTable from './ResourceFieldTable';
@@ -78,7 +79,17 @@ const ServiceExplorer: React.FC = () => {
     setProgress({ current: 0, total: 1, message: 'Starting...' });
 
     try {
-      const normalizedUrl = ArcGISServiceClient.normalizeUrl(url);
+      // Extract token from URL if present
+      const { cleanUrl, token } = AuthService.extractToken(url);
+
+      // Store token if found
+      if (token) {
+        AuthService.saveToken(cleanUrl, token);
+        // Update URL state to show clean URL without token
+        setUrl(cleanUrl);
+      }
+
+      const normalizedUrl = ArcGISServiceClient.normalizeUrl(cleanUrl);
 
       if (mode === 'services') {
         const fetchedServices = await ArcGISServiceClient.getCatalog(

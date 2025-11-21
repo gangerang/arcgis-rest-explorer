@@ -133,3 +133,8 @@ export interface ArcGISResource {
   requiresAuth: boolean;
   error?: string;
 }
+
+export interface AuthToken {
+  serverUrl: string;
+  token: string;
+}

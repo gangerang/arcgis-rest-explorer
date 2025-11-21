@@ -9,6 +9,7 @@ import {
   ArcGISResource,
 } from '../types/arcgis.types';
 import { CacheService } from './cacheService';
+import { AuthService } from './authService';
 
 export interface ProgressCallback {
   (current: number, total: number, message: string): void;
@@ -16,6 +17,20 @@ export interface ProgressCallback {
 
 export class ArcGISServiceClient {
   private static abortController: AbortController | null = null;
+
+  /**
+   * Helper method to add authentication token to request parameters
+   * @param url - The URL being requested
+   * @param params - Existing parameters object
+   * @returns Parameters object with token added if available
+   */
+  private static addTokenToParams(url: string, params: any = {}): any {
+    const token = AuthService.getToken(url);
+    if (token) {
+      return { ...params, token };
+    }
+    return params;
+  }
 
   /**
    * Fetches the catalog of services from an ArcGIS REST endpoint with caching and parallel loading
@@ -192,7 +207,7 @@ export class ArcGISServiceClient {
   ): Promise<ArcGISCatalogResponse> {
     const url = folder ? `${baseUrl}/${folder}` : baseUrl;
     const response = await axios.get(url, {
-      params: { f: 'json' },
+      params: this.addTokenToParams(url, { f: 'json' }),
       timeout: 60000,
       signal: this.abortController?.signal,
     });
@@ -214,7 +229,7 @@ export class ArcGISServiceClient {
 
     const startTime = Date.now();
     const response = await axios.get(serviceUrl, {
-      params: { f: 'json' },
+      params: this.addTokenToParams(serviceUrl, { f: 'json' }),
       timeout: 60000,
     });
 
@@ -238,7 +253,7 @@ export class ArcGISServiceClient {
 
     try {
       const response = await axios.get(url, {
-        params: { f: 'json' },
+        params: this.addTokenToParams(url, { f: 'json' }),
         timeout: 60000,
         maxRedirects: 0,
         validateStatus: (status) => status < 500,
@@ -336,7 +351,7 @@ export class ArcGISServiceClient {
 
     const url = `${serviceUrl}/${layerId}`;
     const response = await axios.get(url, {
-      params: { f: 'json' },
+      params: this.addTokenToParams(url, { f: 'json' }),
       timeout: 60000,
     });
 
@@ -384,7 +399,7 @@ export class ArcGISServiceClient {
     }
 
     const response = await axios.get(url, {
-      params,
+      params: this.addTokenToParams(url, params),
       timeout: 60000,
     });
 
@@ -636,11 +651,11 @@ export class ArcGISServiceClient {
 
     try {
       const response = await axios.get(url, {
-        params: {
+        params: this.addTokenToParams(url, {
           where: '1=1',
           returnCountOnly: true,
           f: 'json',
-        },
+        }),
         timeout: 60000,
       });
 

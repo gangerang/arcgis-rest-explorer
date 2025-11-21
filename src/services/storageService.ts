@@ -1,4 +1,5 @@
 import { ArcGISService } from '../types/arcgis.types';
+import { AuthService } from './authService';
 
 export interface HistoryEntry {
   url: string;
@@ -154,6 +155,7 @@ export class StorageService {
     const data = {
       history: this.getHistory(),
       favorites: this.getFavorites(),
+      tokens: AuthService.getAllTokens(),
       timestamp: Date.now(),
       version: '1.0',
     };
@@ -170,6 +172,13 @@ export class StorageService {
 
       if (data.favorites) {
         localStorage.setItem(this.FAVORITES_KEY, JSON.stringify(data.favorites));
+      }
+
+      // Import tokens if present
+      if (data.tokens) {
+        Object.entries(data.tokens).forEach(([serverUrl, token]) => {
+          AuthService.saveToken(serverUrl, token as string);
+        });
       }
 
       return { success: true };
