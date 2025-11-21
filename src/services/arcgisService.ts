@@ -477,9 +477,13 @@ export class ArcGISServiceClient {
       onProgress?.(0, 1, 'Fetching services...');
       const services = await this.getCatalog(baseUrl, useCache, onProgress);
 
-      // Filter to only services that have layers or tables
+      // Filter to only services that have layers, tables, or are VectorTileServer
+      // VectorTileServer doesn't have traditional layers/tables but should still be included
       const servicesWithResources = services.filter(
-        (s) => (s.layers && s.layers.length > 0) || (s.tables && s.tables.length > 0)
+        (s) =>
+          (s.layers && s.layers.length > 0) ||
+          (s.tables && s.tables.length > 0) ||
+          s.type === 'VectorTileServer'
       );
 
       if (servicesWithResources.length === 0) {
@@ -495,6 +499,42 @@ export class ArcGISServiceClient {
 
         const batchPromises = batch.map(async (service) => {
           const serviceResources: ArcGISResource[] = [];
+
+          // Handle VectorTileServer specially - they don't have traditional layers/tables
+          if (service.type === 'VectorTileServer') {
+            try {
+              // VectorTileServer is itself the resource
+              serviceResources.push({
+                id: 0,
+                name: service.name.split('/').pop() || service.name,
+                type: 'Layer',
+                serviceName: service.name,
+                serviceType: service.type,
+                serviceUrl: service.url,
+                resourceUrl: service.url,
+                folder: service.folder,
+                geometryType: 'Vector Tiles',
+                fieldCount: 0,
+                fields: [],
+                description: service.description || service.serviceDescription,
+                requiresAuth: service.requiresAuth,
+              });
+            } catch (error) {
+              serviceResources.push({
+                id: 0,
+                name: service.name.split('/').pop() || service.name,
+                type: 'Layer',
+                serviceName: service.name,
+                serviceType: service.type,
+                serviceUrl: service.url,
+                resourceUrl: service.url,
+                folder: service.folder,
+                requiresAuth: service.requiresAuth,
+                error: 'Vector Tile Service',
+              });
+            }
+            return serviceResources;
+          }
 
           // Process layers
           if (service.layers) {

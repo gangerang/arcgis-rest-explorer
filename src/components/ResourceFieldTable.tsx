@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Table, Form, InputGroup, Button, Badge } from 'react-bootstrap';
 import { ArcGISResource, ArcGISField } from '../types/arcgis.types';
 import { Search, XCircle } from 'react-bootstrap-icons';
+import { AuthService } from '../services/authService';
 
 interface ResourceFieldTableProps {
   resources: ArcGISResource[];
@@ -18,6 +19,17 @@ export const ResourceFieldTable: React.FC<ResourceFieldTableProps> = ({
   onQueryClick,
 }) => {
   const [resourceSearchTerm, setResourceSearchTerm] = useState<string>('');
+
+  // Helper to add token to URL
+  const addTokenToUrl = (url: string): string => {
+    const token = AuthService.getToken(url);
+    if (token) {
+      const urlObj = new URL(url);
+      urlObj.searchParams.set('token', token);
+      return urlObj.toString();
+    }
+    return url;
+  };
   const [fieldSearchTerm, setFieldSearchTerm] = useState<string>('');
 
   // Flatten resources into field-level rows
@@ -199,7 +211,7 @@ export const ResourceFieldTable: React.FC<ResourceFieldTableProps> = ({
                           <td rowSpan={rowSpan}>
                             <div className="d-flex flex-column">
                               <a
-                                href={resource.serviceUrl}
+                                href={addTokenToUrl(resource.serviceUrl)}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 style={{ textDecoration: 'none', color: 'inherit', fontSize: '0.9em' }}
@@ -212,7 +224,7 @@ export const ResourceFieldTable: React.FC<ResourceFieldTableProps> = ({
                           <td rowSpan={rowSpan}>
                             <div className="d-flex flex-column">
                               <a
-                                href={resource.resourceUrl}
+                                href={addTokenToUrl(resource.resourceUrl)}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 style={{ textDecoration: 'none', color: 'inherit' }}

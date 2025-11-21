@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Table, Form, Badge, Button, InputGroup, FormCheck } from 'react-bootstrap';
 import { ArcGISService } from '../types/arcgis.types';
 import { StorageService } from '../services/storageService';
+import { AuthService } from '../services/authService';
 
 interface ServiceTableProps {
   services: ArcGISService[];
@@ -17,6 +18,17 @@ const ServiceTable: React.FC<ServiceTableProps> = ({ services, onServiceSelect }
   const [favorites, setFavorites] = useState(StorageService.getFavorites());
   const [sortColumn, setSortColumn] = useState<string>('');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+
+  // Helper to add token to URL
+  const addTokenToUrl = (url: string): string => {
+    const token = AuthService.getToken(url);
+    if (token) {
+      const urlObj = new URL(url);
+      urlObj.searchParams.set('token', token);
+      return urlObj.toString();
+    }
+    return url;
+  };
 
   // Get unique service types for filter
   const serviceTypes = useMemo(() => {
@@ -272,7 +284,7 @@ const ServiceTable: React.FC<ServiceTableProps> = ({ services, onServiceSelect }
                   <td className="hide-mobile-folder">
                     {service.folder ? (
                       <a
-                        href={`${service.url.split('/').slice(0, -1).join('/')}`}
+                        href={addTokenToUrl(`${service.url.split('/').slice(0, -1).join('/')}`)}
                         target="_blank"
                         rel="noopener noreferrer"
                         style={{ textDecoration: 'none', color: 'inherit' }}
@@ -286,7 +298,7 @@ const ServiceTable: React.FC<ServiceTableProps> = ({ services, onServiceSelect }
                   <td>
                     <div className="d-flex flex-column">
                       <a
-                        href={service.url}
+                        href={addTokenToUrl(service.url)}
                         target="_blank"
                         rel="noopener noreferrer"
                         style={{ textDecoration: 'none', color: 'inherit' }}
@@ -316,7 +328,7 @@ const ServiceTable: React.FC<ServiceTableProps> = ({ services, onServiceSelect }
                       <Button
                         size="sm"
                         variant="outline-secondary"
-                        onClick={() => window.open(service.url, '_blank')}
+                        onClick={() => window.open(addTokenToUrl(service.url), '_blank')}
                       >
                         View
                       </Button>

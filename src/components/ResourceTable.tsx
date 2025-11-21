@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Table, Form, Badge, Button, InputGroup, Spinner } from 'react-bootstrap';
 import { ArcGISResource } from '../types/arcgis.types';
 import { ArcGISServiceClient } from '../services/arcgisService';
+import { AuthService } from '../services/authService';
 
 interface ResourceTableProps {
   resources: ArcGISResource[];
@@ -16,6 +17,17 @@ const ResourceTable: React.FC<ResourceTableProps> = ({ resources, onResourceSele
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [recordCounts, setRecordCounts] = useState<Map<string, number>>(new Map());
   const [loadingCounts, setLoadingCounts] = useState<Set<string>>(new Set());
+
+  // Helper to add token to URL
+  const addTokenToUrl = (url: string): string => {
+    const token = AuthService.getToken(url);
+    if (token) {
+      const urlObj = new URL(url);
+      urlObj.searchParams.set('token', token);
+      return urlObj.toString();
+    }
+    return url;
+  };
 
   // Sort handler
   const handleSort = (column: string) => {
@@ -258,7 +270,7 @@ const ResourceTable: React.FC<ResourceTableProps> = ({ resources, onResourceSele
                   <td>
                     {resource.folder ? (
                       <a
-                        href={`${resource.serviceUrl.split('/').slice(0, -1).join('/')}`}
+                        href={addTokenToUrl(`${resource.serviceUrl.split('/').slice(0, -1).join('/')}`)}
                         target="_blank"
                         rel="noopener noreferrer"
                         style={{ textDecoration: 'none', color: 'inherit', fontSize: '0.9em' }}
@@ -272,7 +284,7 @@ const ResourceTable: React.FC<ResourceTableProps> = ({ resources, onResourceSele
                   <td>
                     <div className="d-flex flex-column">
                       <a
-                        href={resource.serviceUrl}
+                        href={addTokenToUrl(resource.serviceUrl)}
                         target="_blank"
                         rel="noopener noreferrer"
                         style={{ textDecoration: 'none', color: 'inherit', fontSize: '0.9em' }}
@@ -285,7 +297,7 @@ const ResourceTable: React.FC<ResourceTableProps> = ({ resources, onResourceSele
                   <td>
                     <div className="d-flex flex-column">
                       <a
-                        href={resource.resourceUrl}
+                        href={addTokenToUrl(resource.resourceUrl)}
                         target="_blank"
                         rel="noopener noreferrer"
                         style={{ textDecoration: 'none', color: 'inherit' }}
